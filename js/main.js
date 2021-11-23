@@ -8,7 +8,8 @@ var gameOptions = {
     heroJump: 345,
     isOnJump: false,
     onTriggerFloor: false,
-    onCrouch: false
+    onCrouch: false,
+    isAttacking: false
 
 }
 

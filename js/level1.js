@@ -97,10 +97,19 @@ class level1 extends Phaser.Scene {
             {
                 //Attack
                 key: 'attack',
-                frames: this.anims.generateFrameNumbers('Arthur', { frames: [8, 9] }), frameRate: 9, repeat: -1,
+                frames: this.anims.generateFrameNumbers('Arthur', { frames: [8, 9] }), frameRate: 0, repeat: 0,
 
             });
 
+        this.anims.create(
+            {
+                //Crouch Attack
+                key: 'crouch_attack',
+                frames: this.anims.generateFrameNumbers('Arthur', { frames: [10, 11] }), frameRate: 9, repeat: -1,
+
+            });
+
+        // ZOMBIE----------
         this.anims.create(
             {
                 //Zombie
@@ -124,9 +133,7 @@ class level1 extends Phaser.Scene {
             this.Arthur.play('jump', false);
             gameOptions.onTriggerFloor = true;
         }
-
         if (this.cursors.down.isDown && this.Arthur.body.onFloor()) {
-            //veure si quan estic en crouch 
             this.Arthur.body.velocity.x = 0;
             gameOptions.onCrouch = true;
             this.Arthur.play('run', false);
@@ -136,30 +143,19 @@ class level1 extends Phaser.Scene {
             gameOptions.onCrouch = false;
             this.Arthur.play('crouch', false);
         }
-
+        // MOVEMENT 
         if (this.cursors.left.isDown) {
-            if (!gameOptions.onCrouch) { //Si no estoy agachado doy velocidad
+            this.Arthur.flipX = true;
+            if (!gameOptions.isOnJump && !gameOptions.onCrouch) {
+                this.Arthur.play('run', true);
                 this.Arthur.body.velocity.x = -gameOptions.heroSpeed;
             }
-            this.Arthur.flipX = true; //Este agachado o no hago flip de Arthur ya que agachado cambia de direccion si puslamos left/right
-            //this.Arthur.play('static', false);
-            //this.Arthur.play('idle', false);
-            if (!gameOptions.isOnJump && !gameOptions.onCrouch) {
-                //this.Arthur.play('crouch', false);
-                this.Arthur.play('run', true);
-            }
         }
-
         else if (this.cursors.right.isDown) {
-            if (!gameOptions.onCrouch) { //Si no estoy agachado doy velocidad
-                this.Arthur.body.velocity.x = gameOptions.heroSpeed;
-            }
             this.Arthur.flipX = false;
-            //this.Arthur.play('static', false);
-            //this.Arthur.play('idle', false);
             if (!gameOptions.isOnJump && !gameOptions.onCrouch) {
-                //this.Arthur.play('crouch', false);
                 this.Arthur.play('run', true);
+                this.Arthur.body.velocity.x = gameOptions.heroSpeed;
             }
         }
         else if (!this.cursors.left.isDown && !this.cursors.right.isDown && !this.cursors.down.isDown) {
@@ -168,22 +164,24 @@ class level1 extends Phaser.Scene {
                 this.Arthur.play('run', false);
                 this.Arthur.play('crouch', false);
                 this.Arthur.play('static', true);
-            }
-            //this.Arthur.play('idle', true);
-            //this.Arthur = this.physics.add.sprite(65,250,'Arthur_idle');               
+            }              
         }
 
         //Salto
         if (this.cursors.up.isDown &&
-            this.Arthur.body.onFloor() && //this.hero.body.blocked.down
+            this.Arthur.body.onFloor() &&
             Phaser.Input.Keyboard.DownDuration(this.cursors.up, 250)) {
             this.Arthur.body.velocity.y = -gameOptions.heroJump;
             gameOptions.isOnJump = true;
             this.Arthur.play('jump', true);
             gameOptions.onTriggerFloor = false;
         }
-        if (this.keys.e.isDown) {
+        // Standard Attack
+        if (this.keys.e.isDown && !this.cursors.down.isDown) {
             this.Arthur.play('attack', true);
+        }
+        else if (this.keys.e.isDown && this.cursors.down.isDown) {
+            this.Arthur.play('crouch_attack', true);
         }
 
         // ZOMBIE---------------------------
