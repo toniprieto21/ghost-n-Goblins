@@ -176,7 +176,7 @@ class level1 extends Phaser.Scene {
             this.Arthur.play('jump', true);
             gameOptions.onTriggerFloor = false;
         }
-        // Standard Attack
+        // Standard Attac
         if (this.keys.e.isDown && !this.cursors.down.isDown) {
             this.Arthur.play('attack', true);
         }
