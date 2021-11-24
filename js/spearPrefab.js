@@ -1,16 +1,16 @@
-class spearPrefab extends Phaser.GameObjects.Sprite
+class spearPrefab extends Phaser.Physics.Arcade.Sprite
 {
-    constructor(_scene,_positionX,_positionY,_spriteTag)
+    constructor(scene, x, y)
     {
-        super(_scene,_positionX,_positionY,_spriteTag);
-        _scene.add.existing(this);
+        super(scene, x, y, 'spear');
     }
+    
+    fire(x, y) {
+        this.body.reset(x, y);
 
-    preUpdate()
-    {
-        if(this.y <=0)
-        {
-            this.active = false;
-        }
+        this.setActive(true);
+        this.setVisible(true);
+
+        this.setVelocityX(50);
     }
 }

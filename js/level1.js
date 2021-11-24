@@ -1,6 +1,9 @@
 class level1 extends Phaser.Scene {
     constructor() {
-        super({ key: "level1" });
+        super(
+            { 
+                key: "level1" 
+            });
     }
     preload() {
         this.load.setPath("assets/sprites/");
@@ -26,9 +29,9 @@ class level1 extends Phaser.Scene {
         this.load.tilemapTiledJSON('level1', 'level1.json');
     }
     create() {
-
         //Pintamos el fondo
         this.bg = this.add.tileSprite(0, 0, gameOptions.level1Width, gameOptions.level1Height, 'bg').setOrigin(0);
+
 
         //Pintamos el nivel
         //Cargo el JSON
@@ -47,6 +50,7 @@ class level1 extends Phaser.Scene {
 
         //Pintamos al hero, en la posicion inicial del nivel
         //this.Arthur_idle = this.physics.add.sprite(65,250,'Arthur_idle');
+    
 
         this.Arthur = this.physics.add.sprite(65, 250, 'Arthur');//(65,100,'Arthur');
         
@@ -61,6 +65,8 @@ class level1 extends Phaser.Scene {
         this.cameras.main.startFollow(this.Arthur);
         this.cameras.main.setBounds(0, 0, gameOptions.level1Width, gameOptions.level1Height);
 
+
+
         this.loadPools();
         this.loadAnimations();
 
@@ -72,35 +78,23 @@ class level1 extends Phaser.Scene {
             e: Phaser.Input.Keyboard.KeyCodes.E
         });
 
+        // Intentamos spawnear lanzas
+        //this.spearGroup = new spearGroup(this);
+        this.addEvents();
+    }
 
-        // Ataque lanza
-        this.canShoot = true;
-        this.keys.e.on
-        (
-            'down',
-            function()
-            {
-                if (this.canShoot) 
-                {
-                    this.createSpear();
-                    this.canShoot = false;
-                    this.shootingTimer = this.time.addEvent
-                    (
-                        {
-                            delay: 1000,
-                            callback:function()
-                            {
-                                this.canShoot = true;
-                            },
-                            callbackScope:this,
-                            repeat: 0
-                        }
-                    );
-                }
-            }
-            ,this
-        );
+    addEvents()
+    {
 
+        this.inputKeys = [
+            this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E),
+        ];
+
+    }
+
+    shootLaser()
+    {
+        this.spearGroup.fireSpear(this.Arthur.x, this.Arthur.y, this.Arthur.x);
     }
 
     loadAnimations()
@@ -138,7 +132,7 @@ class level1 extends Phaser.Scene {
             {
                 
                 key: 'attack',
-                frames: this.anims.generateFrameNumbers('Arthur', { frames: [8, 9] }), frameRate: 10, repeat: -1,
+                frames: this.anims.generateFrameNumbers('Arthur', { frames: [8, 9] }), frameRate: 10, repeat: 0,
             });
 
         this.anims.create( // Crouch attack
@@ -175,17 +169,34 @@ class level1 extends Phaser.Scene {
         var _spear = this.spears.getFirst(false);
         if (!_spear) 
         {
-            _spear = new spearPrefab(this, this.Arthur.x, this.Arthur.y, 'spear');
+            _spear = this.add.image(this.Arthur.x, this.Arthur.y - 10, 'spear')
             this.spears.add(_spear);
         }else 
         {
             _spear.active = true;
             _spear.body.reset(this.Arthur.x, this.Arthur.y);
         }
-        _spear.body.setVelocityX(gameOptions.spearSpeed);
+        if (this.Arthur.flipX == true) {
+            _spear.flipX = true;
+            _spear.body.setVelocityX(-gameOptions.spearSpeed);
+        }else{
+            _spear.flipX = false;
+            _spear.body.setVelocityX(gameOptions.spearSpeed);
+        }
+        _spear.body.allowGravity = false;
     }
 
     update() {
+        this.inputKeys.forEach(key => {
+            if (Phaser.Input.Keyboard.JustDown(key)) {
+                this.createSpear();
+
+                if (!gameOptions.isOnJump && !gameOptions.onCrouch) {
+                    this.Arthur.play('attack', true);
+                }
+            }
+        });
+
         // ARTHUR---------------------------
         //Movimiento Arthur izquierda-derecha
         if (this.Arthur.body.onFloor() && gameOptions.onTriggerFloor == false) {
@@ -224,9 +235,10 @@ class level1 extends Phaser.Scene {
                 this.Arthur.body.velocity.x = gameOptions.heroSpeed;
             }
         }
-        else if (this.keys.e.isDown) { // ATTACKS
+        // ATTACK
+        else if (this.keys.e.isDown) { 
             if (!gameOptions.isOnJump && !gameOptions.onCrouch) {
-                this.Arthur.play('attack', true);
+                //this.Arthur.play('attack', true);
             }
         }
         else if (!this.cursors.left.isDown && !this.cursors.right.isDown && !this.cursors.down.isDown) {

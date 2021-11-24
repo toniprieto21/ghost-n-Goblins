@@ -10,7 +10,7 @@ var gameOptions = {
     onTriggerFloor: false,
     onCrouch: false,
     isAttacking: false,
-    spearSpeed: 100
+    spearSpeed: 250
 
 }
 
