@@ -11,6 +11,9 @@ class level1 extends Phaser.Scene {
         //this.load.spritesheet('Arthur','Arthur_Run.png',{frameWidth:32,frameHeight:32}); //Dimensions de un frame no de totes les animacions!
         this.load.spritesheet('Arthur', 'Arthur_All_Move.png', { frameWidth: 32, frameHeight: 32 }); //Dimensions de un frame no de totes les animacions!
 
+        // Cargamos el sprite de la lanza
+        this.load.image('spear', 'spear.png');
+
         //this.load.spritesheet('Arthur_idle','Arthur_Idle.png',{frameWidth:32,frameHeight:32}); //Dimensions de un frame no de totes les animacions!
 
         this.load.spritesheet('Zombie', 'Enemy_Zombie_23x32.png', { frameWidth: 23, frameHeight: 32 }); //Dimensions de un frame no de totes les animacions!
@@ -45,65 +48,102 @@ class level1 extends Phaser.Scene {
         //Pintamos al hero, en la posicion inicial del nivel
         //this.Arthur_idle = this.physics.add.sprite(65,250,'Arthur_idle');
 
+        this.Arthur = this.physics.add.sprite(65, 250, 'Arthur');//(65,100,'Arthur');
+        
         this.Zombie = this.physics.add.sprite(200, 250, 'Zombie');
 
-        this.Arthur = this.physics.add.sprite(65, 250, 'Arthur');//(65,100,'Arthur');
         //Creamos un listener para detectar colisiones entre el hero y las paredes
         this.physics.add.collider(this.Arthur, this.walls);
-        //this.physics.add.collider(this.Arthur_idle,this.walls);
-        this.physics.add.collider(this.Zombie, this.walls);
+
+        //this.physics.add.collider(this.Zombie, this.walls); DESCOMENTAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAR
 
         //Seguimiento camera
         this.cameras.main.startFollow(this.Arthur);
         this.cameras.main.setBounds(0, 0, gameOptions.level1Width, gameOptions.level1Height);
 
+        this.loadPools();
+        this.loadAnimations();
+
+        // Controlamos los inputs de los cursores del teclado
         this.cursors = this.input.keyboard.createCursorKeys();
+
+        // Controlamos los inputs del teclado sin contar los cursores
         this.keys = this.input.keyboard.addKeys({
             e: Phaser.Input.Keyboard.KeyCodes.E
         });
-        //this.space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-        //this.attack = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E);
 
-        this.anims.create(
-            {
-                //Run
-                key: 'run',
-                frames: this.anims.generateFrameNumbers('Arthur', { frames: [0, 1, 2, 3] }), frameRate: 9, repeat: -1,
-            });
 
-        this.anims.create(
+        // Ataque lanza
+        this.canShoot = true;
+        this.keys.e.on
+        (
+            'down',
+            function()
             {
-                //Arthur
+                if (this.canShoot) 
+                {
+                    this.createSpear();
+                    this.canShoot = false;
+                    this.shootingTimer = this.time.addEvent
+                    (
+                        {
+                            delay: 1000,
+                            callback:function()
+                            {
+                                this.canShoot = true;
+                            },
+                            callbackScope:this,
+                            repeat: 0
+                        }
+                    );
+                }
+            }
+            ,this
+        );
+
+    }
+
+    loadAnimations()
+    {
+
+        this.anims.create( //Arthur
+            {
                 key: 'static',
                 frames: this.anims.generateFrameNumbers('Arthur', { frames: [4] }), frameRate: 0, repeat: 0,
             });
 
-        this.anims.create(
+        this.anims.create( //Run
+                {
+                    
+                    key: 'run',
+                    frames: this.anims.generateFrameNumbers('Arthur', { frames: [0, 1, 2, 3] }), frameRate: 9, repeat: -1,
+            });
+
+        this.anims.create( //Jump
             {
-                //Jump
+               
                 key: 'jump',
                 frames: this.anims.generateFrameNumbers('Arthur', { frames: [5] }), frameRate: 5, repeat: 0,
             });
 
-        this.anims.create(
+        this.anims.create( //Crouch
             {
-                //Crouch
+                
                 key: 'crouch',
                 frames: this.anims.generateFrameNumbers('Arthur', { frames: [7] }), frameRate: 0, repeat: 0,
 
             });
 
-        this.anims.create(
+        this.anims.create( //Attack
             {
-                //Attack
+                
                 key: 'attack',
-                frames: this.anims.generateFrameNumbers('Arthur', { frames: [8, 9] }), frameRate: 0, repeat: 0,
-
+                frames: this.anims.generateFrameNumbers('Arthur', { frames: [8, 9] }), frameRate: 10, repeat: -1,
             });
 
-        this.anims.create(
+        this.anims.create( // Crouch attack
             {
-                //Crouch Attack
+                
                 key: 'crouch_attack',
                 frames: this.anims.generateFrameNumbers('Arthur', { frames: [10, 11] }), frameRate: 9, repeat: -1,
 
@@ -125,6 +165,26 @@ class level1 extends Phaser.Scene {
             });
     }
 
+    loadPools() 
+    {
+        this.spears = this.physics.add.group();
+    }
+
+    createSpear() 
+    {
+        var _spear = this.spears.getFirst(false);
+        if (!_spear) 
+        {
+            _spear = new spearPrefab(this, this.Arthur.x, this.Arthur.y, 'spear');
+            this.spears.add(_spear);
+        }else 
+        {
+            _spear.active = true;
+            _spear.body.reset(this.Arthur.x, this.Arthur.y);
+        }
+        _spear.body.setVelocityX(gameOptions.spearSpeed);
+    }
+
     update() {
         // ARTHUR---------------------------
         //Movimiento Arthur izquierda-derecha
@@ -138,6 +198,12 @@ class level1 extends Phaser.Scene {
             gameOptions.onCrouch = true;
             this.Arthur.play('run', false);
             this.Arthur.play('crouch', true);
+
+        }
+        else if(this.cursors.down.isDown && this.keys.e.isDown) {
+            this.Arthur.play('crouch', false);
+            this.Arthur.play('crouch_attack', true);
+
         }
         else if (gameOptions.onCrouch && !this.cursors.down.isDown) {
             gameOptions.onCrouch = false;
@@ -158,6 +224,11 @@ class level1 extends Phaser.Scene {
                 this.Arthur.body.velocity.x = gameOptions.heroSpeed;
             }
         }
+        else if (this.keys.e.isDown) { // ATTACKS
+            if (!gameOptions.isOnJump && !gameOptions.onCrouch) {
+                this.Arthur.play('attack', true);
+            }
+        }
         else if (!this.cursors.left.isDown && !this.cursors.right.isDown && !this.cursors.down.isDown) {
             this.Arthur.body.velocity.x = 0;
             if (!gameOptions.isOnJump) {
@@ -166,7 +237,6 @@ class level1 extends Phaser.Scene {
                 this.Arthur.play('static', true);
             }              
         }
-
         //Salto
         if (this.cursors.up.isDown &&
             this.Arthur.body.onFloor() &&
@@ -175,13 +245,6 @@ class level1 extends Phaser.Scene {
             gameOptions.isOnJump = true;
             this.Arthur.play('jump', true);
             gameOptions.onTriggerFloor = false;
-        }
-        // Standard Attac
-        if (this.keys.e.isDown && !this.cursors.down.isDown) {
-            this.Arthur.play('attack', true);
-        }
-        else if (this.keys.e.isDown && this.cursors.down.isDown) {
-            this.Arthur.play('crouch_attack', true);
         }
 
         // ZOMBIE---------------------------
