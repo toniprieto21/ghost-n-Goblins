@@ -16,6 +16,7 @@ class level1 extends Phaser.Scene {
 
         // Cargamos el sprite de la lanza
         this.load.image('spear', 'spear.png');
+        this.load.image('dagger', 'dagger.png');
 
         //this.load.spritesheet('Arthur_idle','Arthur_Idle.png',{frameWidth:32,frameHeight:32}); //Dimensions de un frame no de totes les animacions!
 
@@ -59,6 +60,7 @@ class level1 extends Phaser.Scene {
         //Creamos un listener para detectar colisiones entre el hero y las paredes
         this.physics.add.collider(this.Arthur, this.walls);
 
+        this.physics.add.collider(this.Zombie,this.walls);
         //this.physics.add.collider(this.Zombie, this.walls); DESCOMENTAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAR
 
         //Seguimiento camera
@@ -92,9 +94,13 @@ class level1 extends Phaser.Scene {
 
     }
 
-    shootLaser()
+    shootSpear()
     {
         this.spearGroup.fireSpear(this.Arthur.x, this.Arthur.y, this.Arthur.x);
+    }
+    shootDagger()
+    {
+        this.daggerGroup.fireDagger(this.Arthur.x, this.Arthur.y, this.Arthur.x);
     }
 
     loadAnimations()
@@ -132,14 +138,14 @@ class level1 extends Phaser.Scene {
             {
                 
                 key: 'attack',
-                frames: this.anims.generateFrameNumbers('Arthur', { frames: [8, 9] }), frameRate: 10, repeat: 0,
+                frames: this.anims.generateFrameNumbers('Arthur', { frames: [8, 9] }), frameRate: 20, repeat: 0,
             });
 
         this.anims.create( // Crouch attack
             {
                 
                 key: 'crouch_attack',
-                frames: this.anims.generateFrameNumbers('Arthur', { frames: [10, 11] }), frameRate: 9, repeat: -1,
+                frames: this.anims.generateFrameNumbers('Arthur', { frames: [10, 11] }), frameRate: 20, repeat: 0,
 
             });
 
@@ -162,9 +168,10 @@ class level1 extends Phaser.Scene {
     loadPools() 
     {
         this.spears = this.physics.add.group();
+        this.daggers = this.physics.add.group();
     }
 
-    createSpear() 
+    createSpear() //onCrouch s'haura de variar X,Y o mirar de variar collider primer ja que sera més petit i potser ja queda be cuan s'implementi 
     {
         var _spear = this.spears.getFirst(false);
         if (!_spear) 
@@ -186,13 +193,51 @@ class level1 extends Phaser.Scene {
         _spear.body.allowGravity = false;
     }
 
+    createDagger() //onCrouch s'haura de variar X,Y o mirar de variar collider primer ja que sera més petit i potser ja queda be cuan s'implementi 
+    {
+        var _dagger = this.daggers.getFirst(false);
+        if (!_dagger) 
+        {
+            _dagger = this.add.image(this.Arthur.x, this.Arthur.y - 10, 'dagger')
+            this.daggers.add(_dagger);
+        }else 
+        {
+            _dagger.active = true;
+            _dagger.body.reset(this.Arthur.x, this.Arthur.y);
+        }
+        if (this.Arthur.flipX == true) {
+            _dagger.flipX = true;
+            _dagger.body.setVelocityX(-gameOptions.daggerSpeed);
+        }else{
+            _dagger.flipX = false;
+            _dagger.body.setVelocityX(gameOptions.daggerSpeed);
+        }
+        _dagger.body.allowGravity = false;
+    }
+
+    setIsAttacking()
+    {
+        gameOptions.isAttacking = false;
+    }
+
+    //Es tindria que controlar gameOptions.isAttacking amb un timer en el momnet d'atgacar, fer que durant aquest temps el jugador no es pugui moure i tambe controlar les animacions d'attack,
+ 
     update() {
+
+        //gameOptions.isAttacking = false;
+
+        //Tenir un enum amb armes i una variable en hero que sigui el arma actual que te.
         this.inputKeys.forEach(key => {
             if (Phaser.Input.Keyboard.JustDown(key)) {
-                this.createSpear();
-
-                if (!gameOptions.isOnJump && !gameOptions.onCrouch) {
+                //CAMBI DE ARMA!!!!!!!!!!!!!!
+                this.createDagger();    
+                //this.createSpear();
+                if (!gameOptions.isOnJump && !gameOptions.onCrouch) { //?¿
                     this.Arthur.play('attack', true);
+                    //gameOptions.isAttacking = true;
+                }
+                else if(gameOptions.onCrouch){
+                    this.Arthur.play('crouch_attack', true);
                 }
             }
         });
@@ -207,19 +252,33 @@ class level1 extends Phaser.Scene {
         if (this.cursors.down.isDown && this.Arthur.body.onFloor()) {
             this.Arthur.body.velocity.x = 0;
             gameOptions.onCrouch = true;
+            if(!gameOptions.isAttacking)
+            {
             this.Arthur.play('run', false);
             this.Arthur.play('crouch', true);
+            }
+            // else
+            // {           
+            //     this.Arthur.play('crouch', false);
+            //     this.Arthur.play('crouch_attack', true);
+            // }
 
         }
-        else if(this.cursors.down.isDown && this.keys.e.isDown) {
+        /*else*/if(this.cursors.down.isDown && this.keys.e.isDown) {
             this.Arthur.play('crouch', false);
-            this.Arthur.play('crouch_attack', true);
-
+             this.Arthur.play('crouch_attack', true);
+             gameOptions.isAttacking = true;
         }
         else if (gameOptions.onCrouch && !this.cursors.down.isDown) {
             gameOptions.onCrouch = false;
             this.Arthur.play('crouch', false);
         }
+
+
+
+
+
+
         // MOVEMENT 
         if (this.cursors.left.isDown) {
             this.Arthur.flipX = true;
